@@ -1,0 +1,1276 @@
+<!--
+    Kelas : Pengolahan Citra Digital - C
+    Judul : Program Image Enhancement dengan Operasi Titik
+
+    Nama Anggota Kelompok F:
+    1. I Kadek Rai Pramana                (2105551094)
+    2. Ni Putu Adnya Puspita Dewi         (2105551099)
+    3. Gusti Ngurah Satya Bagus Partama   (2105551100)
+    4. Dyah Putri Maheswari               (2105551102) 
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Konverter Gambar</title>
+    <script src='https://cdn.plot.ly/plotly-2.14.0.min.js'></script>
+
+    <style>
+        body {
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: sans-serif;
+            font-weight: bold;
+            background-color: #111; /* Black */
+            color: #f0f0f0;
+        }
+
+        .canvasContainer {
+            border-radius: 8px;
+            padding: 8px;
+            overflow: hidden;
+        }
+    
+        .canvasOriginal, .canvasGrayscale, .canvasHasil {
+            max-width: 100%;
+            max-width: 600px;
+            max-height: 400px;
+            padding: 8px;
+            margin: 30px;
+            border: 2px solid #c2c2c2;
+            border-radius: 8px;
+            background-color: #ffffff;
+        }
+        
+        .sidebar {
+            height: 100%; /* Full-height: remove this if you want "auto" height */
+            width: 0px; /* Set the width of the sidebar */
+            position: fixed; /* Fixed Sidebar (stay in place on scroll) */
+            z-index: 1; /* Stay on top */
+            top: 0; /* Stay at the top */
+            left: 0;
+            overflow-x: hidden; /* Disable horizontal scroll */
+            font-size: 12px;
+            text-align: left;
+            transition: 0.5s;
+        }
+
+        .tombol {
+            padding: 10px;
+            background-color: #4d4d4d;
+            border-radius: 8px;
+            margin: 5px;
+            overflow:hidden;
+        }
+
+        .canvas {
+            background-color: #f0f0f0;
+            color: #111;
+            border-radius: 8px;
+            padding: 8px;
+            overflow: hidden;
+            margin-bottom: 28px;
+        }
+
+        /* Style page content */
+        .main {
+            transition: margin-left .5s;
+            padding: 16px;
+        }
+
+        .buttonOpenSideBar {
+            align-items: left;
+            justify-content: left;
+            text-align: left;
+        }
+
+        .buttonCloseSideBar {
+            margin-bottom: 55px;
+        }
+
+        .sidebar .closebtn {
+            position: absolute;
+            top: 0;
+            right: 25px;
+            font-size: 36px;
+            margin-left: 50px;
+        }
+
+        .openbtn {
+            font-size: 20px;
+            cursor: pointer;
+            background-color: #111;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+        }
+
+        .openbtn:hover {
+            background-color: #444;
+        }
+
+        .sidebar a {
+            padding: 8px 8px 8px 32px;
+            text-decoration: none;
+            font-size: 25px;
+            color: #818181;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover {
+            color: #f1f1f1;
+        }
+
+        .histogram {
+            width: auto;
+        }
+
+    </style>    
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar" id="mySidebar">
+            <div class="buttonCloseSideBar">
+                <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">×</a>
+            </div>
+            <div class="tombol">
+                <label for=".inputFile">Pilih File: </label>
+                <input type="file" class="inputFile" multiple="false" accept="image/*">
+            </div>
+            <div class="tombol">
+                <label for=".inputGrayscale">Grayscale: </label>
+                <input type="button" class="inputGrayscale" value="Grayscale">
+            </div>
+            <div class="tombol">
+                <label for="pilihGambar">Jenis Gambar: </label>
+                <br>
+                <input type="radio" class="Original" name="pilihGambar" value="piihGmbOriginal" checked>
+                <label for="Original">Gambar Original</label><br> 
+                <input type="radio" class="Grayscale" name="pilihGambar" value="piihGmbGrayscale">
+                <label for="Grayscale">Gambar Grayscale</label><br>
+            </div>
+            <div class="tombol">
+                <label for=".inputBrightness">Brightness: </label>
+                <input type="number" class="nilaiInputBrightness" value=0 min="-255" max="255">
+                <input type="button" class="inputBrightness" value="Brightness">
+                <br>
+                Max: 255, Min: -255</br>
+            </div>
+            <div class="tombol">
+                <label for=".inputNegation">Negation: </label>
+                <input type="button" class="inputNegation" value="Negation">
+            </div>
+            <div class="tombol">
+                <label for="#sliderGamma">Gamma Correction: </label>
+                <br>
+                <span class="awalSliderGamma"></span>%
+                <input type="range" name="sliderGamma" id="sliderGamma" min="0" max="100" step="1">
+                <span class="akhirSliderGamma"></span>%
+                <input type="button" class="inputGamma" value="Gamma Correction">
+            </div>
+            <div class="tombol">
+                <label for=".inputContrastStretching1">Contrast Stretching 1: </label>
+                <input type="button" class="inputContrastStretching1" value="Contrast Stretching 1">
+            </div>
+            <div class="tombol">
+                <label for=".inputContrastStretching2">Contrast Stretching 2: </label>
+                <br>
+                <label for="#sliderContrastStretching2Min">Nilai Penaikan Piksel Min: </label>
+                <br>
+                <span class="awalSliderContrastStretching2Min"></span>%
+                <input type="range" name="sliderContrastStretching2Min" id="sliderContrastStretching2Min" min="0" max="100" step="1">
+                <span class="akhirSliderContrastStretching2Min"></span>%
+                <br>
+                <label for="#sliderContrastStretching2Max">Nilai Penaikan Piksel Max: </label>
+                <br>
+                <span class="awalSliderContrastStretching2Max"></span>%
+                <input type="range" name="sliderContrastStretching2Max" id="sliderContrastStretching2Max" min="0" max="100" step="1">
+                <span class="akhirSliderContrastStretching2Max"></span>%
+                <br>
+                <input type="button" class="inputContrastStretching2" value="Contrast Stretching 2">
+            </div>
+            <div class="tombol">
+                <label>Intensity Slicing: </label>
+                <br>
+                <label for="#sliderIntensitySlicingMin">Range Min: </label>
+                <br>
+                <span class="awalSliderIntensitySlicingMin"></span>
+                <input type="range" name="sliderIntensitySlicingMin" id="sliderIntensitySlicingMin" min="0" max="255" step="5">
+                <span class="akhirSliderIntensitySlicingMin"></span>
+                <br>
+                <label for="#sliderIntensitySlicingMax">Range Max: </label>
+                <br>
+                <span class="awalSliderIntensitySlicingMax"></span>
+                <input type="range" name="sliderIntensitySlicingMax" id="sliderIntensitySlicingMax" min="0" max="255" step="5">
+                <span class="akhirSliderIntensitySlicingMax"></span>
+                <br>
+                <input type="button" class="inputIntensitySlicing1" value="Intensity Slicing 1">
+                <input type="button" class="inputIntensitySlicing2" value="Intensity Slicing 2">
+            </div>
+            <div class="tombol">
+                <label>Bit Extraction: </label>
+                <br>
+                <input type="radio" class="bit0" name="bitKe" value="7" checked>
+                <label>0</label><br> 
+                <input type="radio" class="bit1" name="bitKe" value="6">
+                <label>1</label><br>
+                <input type="radio" class="bit2" name="bitKe" value="5">
+                <label>2</label><br> 
+                <input type="radio" class="bit3" name="bitKe" value="4">
+                <label>3</label><br>
+                <input type="radio" class="bit4" name="bitKe" value="3">
+                <label>4</label><br> 
+                <input type="radio" class="bit5" name="bitKe" value="2">
+                <label>5</label><br>
+                <input type="radio" class="bit6" name="bitKe" value="1">
+                <label>6</label><br> 
+                <input type="radio" class="bit7" name="bitKe" value="0">
+                <label>7</label><br> 
+                <input type="button" class="inputBitExtraction" value="Bit Extraction">
+            </div>
+            <div class="tombol">
+                <label for="#sliderRangeCompression">Range Compression: </label>
+                <br>
+                <input type="range" name="sliderRangeCompression" id="sliderRangeCompression" min="0" max="850" step="1">
+                <input class="numSliderRangeCompression" type="number" min="0" max="850" value="425">
+                <input type="button" class="inputRangeCompression" value="Range Compression">
+            </div>
+            <div class="tombol">
+                <label for=".histogramEqualization">Histogram Equalization: </label>
+                <input type="button" class="inputHistogramEqualization" value="Histogram Equalization">
+            </div>
+            <div class="tombol">
+                <label>Export: </label>
+                <br>
+                <input type="button" id="downloadGrayscale" value="Gambar Grayscale">
+                <input type="button" id="downloadHasil" value="Gambar Hasil">
+            </div>
+        </div>
+
+        <div class="main" id="main">
+            <div class="buttonOpenSideBar">
+                <button class="openbtn" onclick="openNav()">&#9776; Tool</button>
+            </div>
+            <h1>Konverter Gambar</h1>
+            <div class="canvasContainer">
+                <div class="canvas">
+                    <h3>Gambar Original: </h3>
+                    <canvas class="canvasOriginal"></canvas>
+                    <div class="histogram" id='histogramOriginal'></div>
+                </div> 
+                <div class="canvas">   
+                    <h3>Gambar Grayscale: </h3>
+                    <canvas class="canvasGrayscale"></canvas>
+                    <div class="histogram" id='histogramGrayscale'></div>
+                </div>  
+                <div class="canvas">   
+                    <h3>Gambar Hasil: </h3>
+                    <canvas class="canvasHasil"></canvas>
+                    <div class="histogram" id='histogramHasil'></div>
+                </div>  
+                <div class="canvas">   
+                    <h3>Histogram Perbandingan: </h3>
+                    <div class="histogram" id='histogramBanding'></div>
+                </div> 
+            </div>
+        </div>  
+    </div>
+
+    <script>
+        const fileInput = document.querySelector(".inputFile");
+        const grayscaleInput = document.querySelector(".inputGrayscale")
+        const pilihGambarInput = document.getElementsByName("pilihGambar");
+        const brightnessNilaiInput = document.querySelector(".nilaiInputBrightness");
+        const brightnessInput = document.querySelector(".inputBrightness");
+        const negationInput = document.querySelector(".inputNegation");
+        const gammaInput = document.querySelector(".inputGamma");
+        const contrastStretching1Input = document.querySelector(".inputContrastStretching1");
+        const contrastStretching2Input = document.querySelector(".inputContrastStretching2");
+        const intensitySlicing1Input = document.querySelector(".inputIntensitySlicing1");
+        const intensitySlicing2Input = document.querySelector(".inputIntensitySlicing2");
+        const bitExtractionInputRadio = document.getElementsByName("bitKe");
+        const bitExtractionInput = document.querySelector(".inputBitExtraction");
+        const rangeCompressionInput = document.querySelector(".inputRangeCompression");
+        const histogramEqualizationInput = document.querySelector(".inputHistogramEqualization");
+        const grayscaleDownload = document.getElementById("downloadGrayscale");
+        const hasilDownload = document.getElementById("downloadHasil");
+
+        const sliderGamma = document.querySelector("#sliderGamma");
+        const awalSliderGamma = document.querySelector(".awalSliderGamma");
+        const akhirSliderGamma = document.querySelector(".akhirSliderGamma");
+
+        const sliderContrastStretching2Min = document.querySelector("#sliderContrastStretching2Min");
+        const awalSliderContrastStretching2Min = document.querySelector(".awalSliderContrastStretching2Min");
+        const akhirSliderContrastStretching2Min = document.querySelector(".akhirSliderContrastStretching2Min");
+
+        const sliderContrastStretching2Max = document.querySelector("#sliderContrastStretching2Max");
+        const awalSliderContrastStretching2Max = document.querySelector(".awalSliderContrastStretching2Max");
+        const akhirSliderContrastStretching2Max = document.querySelector(".akhirSliderContrastStretching2Max");
+        
+        const sliderIntensitySlicingMin = document.querySelector("#sliderIntensitySlicingMin");
+        const awalSliderIntensitySlicingMin = document.querySelector(".awalSliderIntensitySlicingMin");
+        const akhirSliderIntensitySlicingMin = document.querySelector(".akhirSliderIntensitySlicingMin");
+
+        const sliderIntensitySlicingMax = document.querySelector("#sliderIntensitySlicingMax");
+        const awalSliderIntensitySlicingMax = document.querySelector(".awalSliderIntensitySlicingMax");
+        const akhirSliderIntensitySlicingMax = document.querySelector(".akhirSliderIntensitySlicingMax");
+
+        const sliderRangeCompression = document.querySelector("#sliderRangeCompression");
+        var numSliderRangeCompression = document.querySelector(".numSliderRangeCompression");
+
+        const canvasOriginal = document.querySelector(".canvasOriginal");
+        const canvasCtxOriginal = canvasOriginal.getContext("2d");
+
+        const canvasGrayscale = document.querySelector(".canvasGrayscale");
+        const canvasCtxGrayscale = canvasGrayscale.getContext("2d");
+
+        const canvasHasil = document.querySelector(".canvasHasil");
+        const canvasCtxHasil = canvasHasil.getContext("2d");
+
+        let activeImage, activeImageG, activeImageH, imgData, checkedRadio, checkedRadioCH, checkedRadioBitEx, canvasName;
+        let bit = 2 ** 8 - 1; //255
+        var o1 = [], o2 = [], o3 = [], g1 = [], g2 = [], g3 = [], h1 = [], h2 = [], h3 = [], ob = [], gb = [], hb = [];
+
+        awalSliderGamma.innerHTML = sliderGamma.min;
+        akhirSliderGamma.innerHTML = sliderGamma.value;
+        sliderGamma.addEventListener("input", function() {
+            akhirSliderGamma.innerHTML = sliderGamma.value;
+        });
+
+        awalSliderContrastStretching2Min.innerHTML = sliderContrastStretching2Min.min;
+        akhirSliderContrastStretching2Min.innerHTML = sliderContrastStretching2Min.value;
+        sliderContrastStretching2Min.addEventListener("input", function() {
+            akhirSliderContrastStretching2Min.innerHTML = sliderContrastStretching2Min.value;
+        });
+
+        awalSliderContrastStretching2Max.innerHTML = sliderContrastStretching2Max.min;
+        akhirSliderContrastStretching2Max.innerHTML = sliderContrastStretching2Max.value;
+        sliderContrastStretching2Max.addEventListener("input", function() {
+            akhirSliderContrastStretching2Max.innerHTML = sliderContrastStretching2Max.value;
+        });
+
+        awalSliderIntensitySlicingMin.innerHTML = sliderIntensitySlicingMin.min;
+        akhirSliderIntensitySlicingMin.innerHTML = sliderIntensitySlicingMin.value;
+        sliderIntensitySlicingMin.addEventListener("input", function() {
+            akhirSliderIntensitySlicingMin.innerHTML = sliderIntensitySlicingMin.value;
+        });
+
+        awalSliderIntensitySlicingMax.innerHTML = sliderIntensitySlicingMax.min;
+        akhirSliderIntensitySlicingMax.innerHTML = sliderIntensitySlicingMax.value;
+        sliderIntensitySlicingMax.addEventListener("input", function() {
+            akhirSliderIntensitySlicingMax.innerHTML = sliderIntensitySlicingMax.value;
+        });
+
+        sliderRangeCompression.addEventListener('input', function (e) { numSliderRangeCompression.value = e.target.value; });
+        numSliderRangeCompression.addEventListener('input', function (e) { sliderRangeCompression.value = e.target.value; });
+        
+        fileInput.addEventListener("change", (e) => {
+            const reader = new FileReader();
+
+            reader.addEventListener("load", () => {
+                openImage(reader.result);
+            });
+
+            reader.readAsDataURL(e.target.files[0]);
+
+            activeImageG = 0;
+            activeImageH = 0;
+
+            plotHistogram(0, 0, 0, "");
+            plotHistogramBanding(0, 0, "");
+        });
+
+        grayscaleInput.addEventListener("click", (e) => {
+            if (activeImage) {
+                grayscale();
+
+                activeImageG = 1;
+            }
+        });
+
+        brightnessInput.addEventListener("click", (e) => {
+            clearImage("");
+
+            if (activeImage) {
+                let nilaiBrightness = parseInt(brightnessNilaiInput.value);
+                if (nilaiBrightness > 255) {
+                    nilaiBrightness = 255;
+                } else if (nilaiBrightness < -255) {
+                    nilaiBrightness = -255;
+                }
+
+                checkedRadio = Array.from(pilihGambarInput).find((radio) => radio.checked);
+                
+                brightness(nilaiBrightness, checkedRadio.value); 
+
+                activeImageH = 1;
+            }
+        });
+
+        negationInput.addEventListener("click", (e) => {
+            clearImage("");
+
+            if (activeImage) {  
+                checkedRadio = Array.from(pilihGambarInput).find((radio) => radio.checked);
+                
+                negation(checkedRadio.value);   
+                
+                activeImageH = 1;
+            }
+        });
+
+        gammaInput.addEventListener("click", (e) => {
+            clearImage("");
+
+            if (activeImage) {   
+                checkedRadio = Array.from(pilihGambarInput).find((radio) => radio.checked);
+
+                gammaCorrection(sliderGamma.value, checkedRadio.value);   
+                
+                activeImageH = 1;
+            }
+        });
+
+        contrastStretching1Input.addEventListener("click", (e) => {
+            clearImage("");
+
+            if (activeImage) {     
+                checkedRadio = Array.from(pilihGambarInput).find((radio) => radio.checked);
+
+                contrastStretching1(checkedRadio.value);
+                
+                activeImageH = 1;
+            }
+        });
+
+        contrastStretching2Input.addEventListener("click", (e) => {
+            clearImage("");
+
+            if (activeImage) {
+                checkedRadio = Array.from(pilihGambarInput).find((radio) => radio.checked);
+
+                contrastStretching2(sliderContrastStretching2Min.value, sliderContrastStretching2Max.value, checkedRadio.value); 
+                
+                activeImageH = 1;  
+            }
+        });
+
+        intensitySlicing1Input.addEventListener("click", (e) => {
+            clearImage("");
+
+            if (activeImage) {
+                checkedRadio = Array.from(pilihGambarInput).find((radio) => radio.checked);
+
+                intensitySlicing1(sliderIntensitySlicingMin.value, sliderIntensitySlicingMax.value, checkedRadio.value);   
+                
+                activeImageH = 1;
+            }
+        });
+
+        intensitySlicing2Input.addEventListener("click", (e) => {
+            clearImage("");
+
+            if (activeImage) {
+                checkedRadio = Array.from(pilihGambarInput).find((radio) => radio.checked);
+
+                intensitySlicing2(sliderIntensitySlicingMin.value, sliderIntensitySlicingMax.value, checkedRadio.value);   
+                
+                activeImageH = 1;
+            }
+        });
+
+        bitExtractionInput.addEventListener("click", (e) => {
+            clearImage("");
+
+            if (activeImage) {
+                checkedRadio = Array.from(pilihGambarInput).find((radio) => radio.checked);
+
+                checkedRadioBitEx = Array.from(bitExtractionInputRadio).find((radio) => radio.checked);
+                
+                bitExtraction(checkedRadioBitEx.value, checkedRadio.value);
+
+                activeImageH = 1;
+            }
+        });
+
+        rangeCompressionInput.addEventListener("click", (e) => {
+            clearImage("");
+
+            if (activeImage) {   
+                checkedRadio = Array.from(pilihGambarInput).find((radio) => radio.checked);
+
+                rangeCompression(sliderRangeCompression.value, checkedRadio.value);   
+                
+                activeImageH = 1;
+            }
+        });
+
+        histogramEqualizationInput.addEventListener("click", (e) => {
+            clearImage("");
+
+            if (activeImage) {  
+                checkedRadio = Array.from(pilihGambarInput).find((radio) => radio.checked);
+                
+                histogramEqualization(checkedRadio.value);   
+                
+                activeImageH = 1;
+            }
+        });
+
+        grayscaleDownload.addEventListener('click', function(e) {
+            if (activeImage && activeImageG == 1) {
+                const link = document.createElement('a');
+                link.download = 'grayscale.png';
+                link.href = canvasGrayscale.toDataURL();
+                link.click();
+                link.delete;
+            }
+        });
+
+        hasilDownload.addEventListener('click', function(e) {
+            if (activeImage && activeImageH == 1) {
+                const link = document.createElement('a');
+                link.download = canvasName + '.png';
+                link.href = canvasHasil.toDataURL();
+                link.click();
+                link.delete;
+            }
+        });
+
+        function openImage(imageSrc) {
+            activeImage = new Image();
+
+            activeImage.addEventListener("load", () => {
+                clearImage("gantiGambar");
+
+                prosesOriginal(activeImage.width, activeImage.height);
+
+                for (i = 0; i < imgData.data.length; i += 4) {
+                    imgData.data[i + 3] = 255;
+
+                    o1.push(imgData.data[i]);
+                    o2.push(imgData.data[i + 1]);
+                    o3.push(imgData.data[i + 2]);
+
+                    ob.push(imgData.data[i]);
+                    ob.push(imgData.data[i + 1]);
+                    ob.push(imgData.data[i + 2]);
+                }
+
+                plotHistogram(o1, o2, o3, "Original");
+            });
+
+            activeImage.src = imageSrc;
+        }
+
+        function clearImage (mode) {
+            if (mode == "gantiGambar") {
+                canvasCtxGrayscale.clearRect(0, 0, canvasGrayscale.width, canvasGrayscale.height);
+            }
+
+            canvasCtxHasil.clearRect(0, 0, canvasHasil.width, canvasHasil.height);
+        }
+
+        function cekJenisGambar(jenisGambar) {
+            if (jenisGambar == 'piihGmbOriginal') {
+                prosesPilihGambarOriginal();
+            } else if (jenisGambar == 'piihGmbGrayscale') {
+                prosesPilihGambarGrayscale();
+            } else {
+                return 0;
+            }   
+        }
+
+        function plotHistogram(x1 = [], x2= [], x3 = [], jenisHistogram) {
+            var red = {
+                x: x1,
+                type: "histogram",
+                opacity: 0.5,
+                marker: {
+                    color: 'red',
+                },
+                name: "Red", 
+            };
+
+            var green = {
+                x: x2,
+                type: "histogram",
+                opacity: 0.6,
+                marker: {
+                    color: 'green',
+                },
+                name: "Green", 
+            };
+
+            var blue = {
+                x: x3,
+                type: "histogram",
+                opacity: 0.7,
+                marker: {
+                    color: 'blue',
+                },
+                name: "Blue", 
+            };
+
+            var histogramData = [red, green, blue];
+            var layout = {barmode: "overlay"};
+
+            if (jenisHistogram == "Original") {
+                Plotly.newPlot('histogramOriginal', histogramData, layout);
+            } else if (jenisHistogram == "Grayscale") {
+                Plotly.newPlot('histogramGrayscale', histogramData, layout);
+            } else if (jenisHistogram == "Hasil") {
+                Plotly.newPlot('histogramHasil', histogramData, layout);
+            } else {
+                Plotly.newPlot('histogramOriginal', histogramData, layout);
+                Plotly.newPlot('histogramGrayscale', histogramData, layout);
+                Plotly.newPlot('histogramHasil', histogramData, layout);
+            }
+
+            o1 = [];
+            o2 = [];
+            o3 = [];
+            g1 = [];
+            g2 = [];
+            g3 = [];
+            h1 = [];
+            h2 = [];
+            h3 = [];
+        }
+
+        function plotHistogramBanding(a = [], b = [], cek) {
+            var ori = {
+                x: a,
+                type: "histogram",
+                opacity: 0.6,
+                marker: {
+                    color: 'blue',
+                },
+                name: "Citra Asli", 
+            };
+
+            var hasil = {
+                x: b,
+                type: "histogram",
+                opacity: 0.8,
+                marker: {
+                    color: 'orange',
+                },
+                name: "Citra Hasil", 
+            };
+
+            var histogramData = [ori, hasil];
+            var layout = {barmode: "overlay"};
+
+            if (cek == "aktif") {
+                Plotly.newPlot('histogramBanding', histogramData, layout);
+            } else {
+                Plotly.newPlot('histogramBanding', histogramData, layout);
+            }
+
+            hb = [];
+        }
+
+        function prosesOriginal(width, height) {
+            canvasOriginal.width = width;
+            canvasOriginal.height = height;
+            canvasCtxOriginal.drawImage(activeImage, 0, 0, width, height);
+            imgData = canvasCtxOriginal.getImageData(0, 0, activeImage.width, activeImage.height);
+        }
+
+        function prosesGrayscale() {
+            canvasGrayscale.width = activeImage.width;
+            canvasGrayscale.height = activeImage.height;
+            canvasCtxGrayscale.drawImage(activeImage, 0, 0, activeImage.width, activeImage.height);
+            imgData = canvasCtxGrayscale.getImageData(0, 0, activeImage.width, activeImage.height);
+        }
+
+        function prosesPilihGambarOriginal () {
+            canvasHasil.width = activeImage.width;
+            canvasHasil.height = activeImage.height;
+            canvasCtxHasil.drawImage(activeImage, 0, 0, activeImage.width, activeImage.height);
+            imgData = canvasCtxHasil.getImageData(0, 0, activeImage.width, activeImage.height);
+        }
+
+        function prosesPilihGambarGrayscale () {
+            canvasHasil.width = canvasGrayscale.width;
+            canvasHasil.height = canvasGrayscale.height;
+            canvasCtxHasil.drawImage(canvasGrayscale, 0, 0, canvasGrayscale.width, canvasGrayscale.height);
+            imgData = canvasCtxHasil.getImageData(0, 0, canvasGrayscale.width, canvasGrayscale.height);
+        }
+
+        function cariPikselTertinggi() {
+            let c = 0, cF = 0; // highest pixel
+            
+            for (i = 0; i < imgData.data.length; i += 4) {
+                if (imgData.data[i] >= imgData.data[i + 1] && imgData.data[i] >= imgData.data[i + 2]){
+                    c = imgData.data[i];
+                }else if (imgData.data[i + 1] >= imgData.data[i] && imgData.data[i + 1] >= imgData.data[i + 2]){
+                    c = imgData.data[i + 1];
+                }else{
+                    c = imgData.data[i + 2];
+                }
+
+                if(c > cF){
+                    cF = c;
+                }
+            }
+
+            return cF;
+        }
+
+        function cariPikselTerendah() {
+            let d = 0, dF = 255; // Lowest pixel
+
+            for (i = 0; i < imgData.data.length; i += 4) {
+                if (imgData.data[i] <= imgData.data[i + 1] && imgData.data[i] <= imgData.data[i + 2]){
+                    d = imgData.data[i];
+                }else if (imgData.data[i + 1] <= imgData.data[i] && imgData.data[i + 1] <= imgData.data[i + 2]){
+                    d = imgData.data[i + 1];
+                }else{
+                    d = imgData.data[i + 2];
+                }
+
+                if(d < dF){
+                    dF = d;
+                }
+            }
+
+            return dF;
+        }
+
+        function grayscale () {
+            prosesGrayscale();
+
+            let avg;
+
+            for (i = 0; i < imgData.data.length; i += 4) {
+                avg = (imgData.data[i] + imgData.data[i + 1] + imgData.data[i + 2])/3;
+                imgData.data[i] = avg;
+                imgData.data[i + 1] = avg;
+                imgData.data[i + 2] = avg;
+                imgData.data[i + 3] = 255;
+
+                g1.push(imgData.data[i]);
+                g2.push(imgData.data[i+1]);
+                g3.push(imgData.data[i+2]);
+
+                gb.push(imgData.data[i]);
+                gb.push(imgData.data[i+1]);
+                gb.push(imgData.data[i+2]);
+            }
+
+            plotHistogram(g1, g2, g3, "Grayscale");
+
+            canvasCtxGrayscale.putImageData(imgData, 0, 0);
+        }
+
+        function brightness (nilaiBrightness, jenisGambar) {            
+            if (cekJenisGambar(jenisGambar) != 0) {
+                cekJenisGambar(jenisGambar);
+            }
+
+            for (i = 0; i < imgData.data.length; i += 4) {
+                imgData.data[i] += nilaiBrightness;
+                imgData.data[i + 1] += nilaiBrightness;
+                imgData.data[i + 2] += nilaiBrightness;
+                imgData.data[i + 3] = 255;
+
+                if (imgData.data[i] > 255) {
+                    imgData.data[i] = 255;
+                } else if (imgData.data[i] < 0) {
+                    imgData.data[i] = 0;
+                } 
+                
+                if (imgData.data[i + 1] > 255) {
+                    imgData.data[i + 1] = 255;
+                } else if (imgData.data[i + 1] < 0) {
+                    imgData.data[i + 1] = 0;
+                } 
+                
+                if (imgData.data[i + 2] > 255) {
+                    imgData.data[i + 2] = 255;
+                } else if (imgData.data[i + 2] < 0) {
+                    imgData.data[i + 2] = 0;
+                }
+
+                h1.push(imgData.data[i]);
+                h2.push(imgData.data[i+1]);
+                h3.push(imgData.data[i+2]);
+
+                hb.push(imgData.data[i]);
+                hb.push(imgData.data[i+1]);
+                hb.push(imgData.data[i+2]);
+            }
+
+            plotHistogram(h1, h2, h3, "Hasil");
+
+            if (jenisGambar == 'piihGmbOriginal') {
+                plotHistogramBanding(ob, hb, "aktif");
+            } else if (jenisGambar == 'piihGmbGrayscale') {
+                plotHistogramBanding(gb, hb, "aktif");
+            }
+
+            canvasCtxHasil.putImageData(imgData, 0, 0);
+
+            canvasName = 'brightness';
+        }
+
+        function negation (jenisGambar) {            
+            if (cekJenisGambar(jenisGambar) != 0) {
+                cekJenisGambar(jenisGambar);
+            }
+
+            for (i = 0; i < imgData.data.length; i += 4) {
+                imgData.data[i] = bit - imgData.data[i];
+                imgData.data[i + 1] = bit - imgData.data[i + 1];
+                imgData.data[i + 2] = bit - imgData.data[i + 2];
+                imgData.data[i + 3] = 255;
+
+                h1.push(imgData.data[i]);
+                h2.push(imgData.data[i+1]);
+                h3.push(imgData.data[i+2]);
+
+                hb.push(imgData.data[i]);
+                hb.push(imgData.data[i+1]);
+                hb.push(imgData.data[i+2]);
+            }
+
+            plotHistogram(h1, h2, h3, "Hasil");
+
+            if (jenisGambar == 'piihGmbOriginal') {
+                plotHistogramBanding(ob, hb, "aktif");
+            } else if (jenisGambar == 'piihGmbGrayscale') {
+                plotHistogramBanding(gb, hb, "aktif");
+            }
+
+            canvasCtxHasil.putImageData(imgData, 0, 0);
+
+            canvasName = 'negation';
+        }
+
+        function gammaCorrection (nilaiGamma, jenisGambar) {            
+            if (cekJenisGambar(jenisGambar) != 0) {
+                cekJenisGambar(jenisGambar);
+            }
+
+            let y = 1 / (nilaiGamma * 0.01);
+
+            for (i = 0; i < imgData.data.length; i += 4) {
+                imgData.data[i] **= y;
+                imgData.data[i + 1] **= y;
+                imgData.data[i + 2] **= y;
+                imgData.data[i + 3] = 255;
+
+                if (imgData.data[i] > 255) {
+                    imgData.data[i] = 255;
+                } 
+                
+                if (imgData.data[i + 1] > 255) {
+                    imgData.data[i + 1] = 255;
+                } 
+                
+                if (imgData.data[i + 2] > 255) {
+                    imgData.data[i + 2] = 255;
+                } 
+
+                h1.push(imgData.data[i]);
+                h2.push(imgData.data[i+1]);
+                h3.push(imgData.data[i+2]);
+
+                hb.push(imgData.data[i]);
+                hb.push(imgData.data[i+1]);
+                hb.push(imgData.data[i+2]);
+            }
+
+            plotHistogram(h1, h2, h3, "Hasil");
+
+            if (jenisGambar == 'piihGmbOriginal') {
+                plotHistogramBanding(ob, hb, "aktif");
+            } else if (jenisGambar == 'piihGmbGrayscale') {
+                plotHistogramBanding(gb, hb, "aktif");
+            }
+
+            canvasCtxHasil.putImageData(imgData, 0, 0);
+
+            canvasName = 'gammaCorrection';
+        }
+
+        function contrastStretching1 (jenisGambar) {            
+            if (cekJenisGambar(jenisGambar) != 0) {
+                cekJenisGambar(jenisGambar);
+            }
+
+            let pikselTerendah = cariPikselTerendah();
+            let pikselTertinggi = cariPikselTertinggi();
+            
+            for (i = 0; i < imgData.data.length; i += 4) {
+                imgData.data[i] = bit * (imgData.data[i] - pikselTerendah) / (pikselTertinggi - pikselTerendah);
+                imgData.data[i + 1] = bit * (imgData.data[i + 1] - pikselTerendah) / (pikselTertinggi - pikselTerendah);
+                imgData.data[i + 2] = bit * (imgData.data[i + 2] - pikselTerendah) / (pikselTertinggi - pikselTerendah);
+                imgData.data[i + 3] = 255;
+                
+                h1.push(imgData.data[i]);
+                h2.push(imgData.data[i+1]);
+                h3.push(imgData.data[i+2]);
+
+                hb.push(imgData.data[i]);
+                hb.push(imgData.data[i+1]);
+                hb.push(imgData.data[i+2]);
+            }
+
+            plotHistogram(h1, h2, h3, "Hasil");
+
+            if (jenisGambar == 'piihGmbOriginal') {
+                plotHistogramBanding(ob, hb, "aktif");
+            } else if (jenisGambar == 'piihGmbGrayscale') {
+                plotHistogramBanding(gb, hb, "aktif");
+            }
+
+            canvasCtxHasil.putImageData(imgData, 0, 0);
+
+            canvasName = 'contrastStretching1';
+        }
+
+        function contrastStretching2 (nilaiNaikanPikselTerendah, nilaiNaikanPikselTertinggi, jenisGambar) {            
+            if (cekJenisGambar(jenisGambar) != 0) {
+                cekJenisGambar(jenisGambar);
+            }
+
+            let pikselTerendah = cariPikselTerendah();
+            let pikselTertinggi = cariPikselTertinggi();
+
+            pikselTerendah = pikselTerendah + (pikselTerendah * (nilaiNaikanPikselTerendah * 0.01));
+            pikselTertinggi = pikselTertinggi - (pikselTertinggi * (nilaiNaikanPikselTertinggi * 0.01));
+
+            for (i = 0; i < imgData.data.length; i += 4) {
+                if (imgData.data[i] < pikselTerendah) {
+                    imgData.data[i] = 0;
+                } else if (imgData.data[i] > pikselTertinggi) {
+                    imgData.data[i] = 255;
+                } else {
+                    imgData.data[i] = bit * (imgData.data[i] - pikselTerendah) / (pikselTertinggi - pikselTerendah);
+                }
+                
+                if (imgData.data[i + 1] < pikselTerendah) {
+                    imgData.data[i + 1] = 0;
+                } else if (imgData.data[i + 1] > pikselTertinggi) {
+                    imgData.data[i + 1] = 255;
+                } else {
+                    imgData.data[i + 1] = bit * (imgData.data[i + 1] - pikselTerendah) / (pikselTertinggi - pikselTerendah);
+                }
+                
+                if (imgData.data[i + 2] < pikselTerendah) {
+                    imgData.data[i + 2] = 0;
+                } else if (imgData.data[i + 2] > pikselTertinggi) {
+                    imgData.data[i + 2] = 255;
+                } else {
+                    imgData.data[i + 2] = bit * (imgData.data[i + 2] - pikselTerendah) / (pikselTertinggi - pikselTerendah);
+                }
+
+                imgData.data[i + 3] = 255;
+                
+                h1.push(imgData.data[i]);
+                h2.push(imgData.data[i+1]);
+                h3.push(imgData.data[i+2]);
+
+                hb.push(imgData.data[i]);
+                hb.push(imgData.data[i+1]);
+                hb.push(imgData.data[i+2]);
+            }
+
+            plotHistogram(h1, h2, h3, "Hasil");
+
+            if (jenisGambar == 'piihGmbOriginal') {
+                plotHistogramBanding(ob, hb, "aktif");
+            } else if (jenisGambar == 'piihGmbGrayscale') {
+                plotHistogramBanding(gb, hb, "aktif");
+            }
+
+            canvasCtxHasil.putImageData(imgData, 0, 0);
+
+            canvasName = 'contrastStretching2';
+        }
+
+        function intensitySlicing1 (rangeAwal, rangeAkhir, jenisGambar) {            
+            if (cekJenisGambar(jenisGambar) != 0) {
+                cekJenisGambar(jenisGambar);
+            }
+
+            for (i = 0; i < imgData.data.length; i += 4) {
+                if (imgData.data[i] >= rangeAwal && imgData.data[i] <= rangeAkhir) {
+                    imgData.data[i] = bit;
+                } else {
+                    imgData.data[i] = 0;
+                }
+                
+                if (imgData.data[i + 1] >= rangeAwal && imgData.data[i + 1] <= rangeAkhir) {
+                    imgData.data[i + 1] = bit;
+                } else {
+                    imgData.data[i + 1] = 0;
+                }
+                
+                if (imgData.data[i + 2] >= rangeAwal && imgData.data[i + 2] <= rangeAkhir) {
+                    imgData.data[i + 2] = bit;
+                } else {
+                    imgData.data[i + 2] = 0;
+                }
+
+                imgData.data[i + 3] = 255;
+                
+                h1.push(imgData.data[i]);
+                h2.push(imgData.data[i+1]);
+                h3.push(imgData.data[i+2]);
+
+                hb.push(imgData.data[i]);
+                hb.push(imgData.data[i+1]);
+                hb.push(imgData.data[i+2]);
+            }
+
+            plotHistogram(h1, h2, h3, "Hasil");
+
+            if (jenisGambar == 'piihGmbOriginal') {
+                plotHistogramBanding(ob, hb, "aktif");
+            } else if (jenisGambar == 'piihGmbGrayscale') {
+                plotHistogramBanding(gb, hb, "aktif");
+            }
+
+            canvasCtxHasil.putImageData(imgData, 0, 0);
+
+            canvasName = 'intensitySlicing1';
+        }
+
+        function intensitySlicing2 (rangeAwal, rangeAkhir, jenisGambar) {            
+            if (cekJenisGambar(jenisGambar) != 0) {
+                cekJenisGambar(jenisGambar);
+            }
+
+            for (i = 0; i < imgData.data.length; i += 4) {
+                if (imgData.data[i] >= rangeAwal && imgData.data[i] <= rangeAkhir) {
+                    imgData.data[i] = bit;
+                }
+                
+                if (imgData.data[i + 1] >= rangeAwal && imgData.data[i + 1] <= rangeAkhir) {
+                    imgData.data[i + 1] = bit;
+                }
+                
+                if (imgData.data[i + 2] >= rangeAwal && imgData.data[i + 2] <= rangeAkhir) {
+                    imgData.data[i + 2] = bit;
+                }
+
+                imgData.data[i + 3] = 255;
+                
+                h1.push(imgData.data[i]);
+                h2.push(imgData.data[i+1]);
+                h3.push(imgData.data[i+2]);
+
+                hb.push(imgData.data[i]);
+                hb.push(imgData.data[i+1]);
+                hb.push(imgData.data[i+2]);
+            }
+
+            plotHistogram(h1, h2, h3, "Hasil");
+
+            if (jenisGambar == 'piihGmbOriginal') {
+                plotHistogramBanding(ob, hb, "aktif");
+            } else if (jenisGambar == 'piihGmbGrayscale') {
+                plotHistogramBanding(gb, hb, "aktif");
+            }
+
+            canvasCtxHasil.putImageData(imgData, 0, 0);
+
+            canvasName = 'intensitySlicing2';
+        }
+
+        function bitExtraction (indeksBit, jenisGambar) {            
+            if (cekJenisGambar(jenisGambar) != 0) {
+                cekJenisGambar(jenisGambar);
+            }
+
+            let strBit0, strBit1, strBit2;
+
+            for (i = 0; i < imgData.data.length; i += 4) {
+                strBit0 = ("00000000" + (imgData.data[i]).toString(2)).slice(-8);
+                strBit1 = ("00000000" + (imgData.data[i + 1]).toString(2)).slice(-8);
+                strBit2 = ("00000000" + (imgData.data[i + 2]).toString(2)).slice(-8);
+
+                if (strBit0[indeksBit] == 1) {
+                    imgData.data[i] = bit;
+                } else if (strBit0[indeksBit] == 0) {
+                    imgData.data[i] = 0;
+                }
+
+                if (strBit1[indeksBit] == 1) {
+                    imgData.data[i + 1] = bit;
+                } else if (strBit1[indeksBit] == 0) {
+                    imgData.data[i + 1] = 0;
+                }
+
+                if (strBit2[indeksBit] == 1) {
+                    imgData.data[i + 2] = bit;
+                } else if (strBit2[indeksBit] == 0) {
+                    imgData.data[i + 2] = 0;
+                }    
+
+                imgData.data[i + 3] = 255;
+                
+                h1.push(imgData.data[i]);
+                h2.push(imgData.data[i+1]);
+                h3.push(imgData.data[i+2]);
+
+                hb.push(imgData.data[i]);
+                hb.push(imgData.data[i+1]);
+                hb.push(imgData.data[i+2]);
+            }
+
+            plotHistogram(h1, h2, h3, "Hasil");
+
+            if (jenisGambar == 'piihGmbOriginal') {
+                plotHistogramBanding(ob, hb, "aktif");
+            } else if (jenisGambar == 'piihGmbGrayscale') {
+                plotHistogramBanding(gb, hb, "aktif");
+            }
+
+            canvasCtxHasil.putImageData(imgData, 0, 0);
+
+            canvasName = 'bitExtraction';
+        }
+
+        function rangeCompression(nilaiRangeCompression, jenisGambar) {            
+            if (cekJenisGambar(jenisGambar) != 0) {
+                cekJenisGambar(jenisGambar);
+            }
+
+            for (i = 0; i < imgData.data.length; i += 4) {
+                imgData.data[i] = nilaiRangeCompression * Math.log10(1 + Math.abs(imgData.data[i]));
+                imgData.data[i + 1] = nilaiRangeCompression * Math.log10(1 + Math.abs(imgData.data[i + 1]));
+                imgData.data[i + 2] = nilaiRangeCompression * Math.log10(1 + Math.abs(imgData.data[i + 2]));
+                imgData.data[i + 3] = 255;
+
+                if (imgData.data[i] > 255) {
+                    imgData.data[i] = 255;
+                } 
+                
+                if (imgData.data[i + 1] > 255) {
+                    imgData.data[i + 1] = 255;
+                } 
+                
+                if (imgData.data[i + 2] > 255) {
+                    imgData.data[i + 2] = 255;
+                } 
+
+                h1.push(imgData.data[i]);
+                h2.push(imgData.data[i+1]);
+                h3.push(imgData.data[i+2]);
+
+                hb.push(imgData.data[i]);
+                hb.push(imgData.data[i+1]);
+                hb.push(imgData.data[i+2]);
+            }
+
+            plotHistogram(h1, h2, h3, "Hasil");
+
+            if (jenisGambar == 'piihGmbOriginal') {
+                plotHistogramBanding(ob, hb, "aktif");
+            } else if (jenisGambar == 'piihGmbGrayscale') {
+                plotHistogramBanding(gb, hb, "aktif");
+            }
+
+            canvasCtxHasil.putImageData(imgData, 0, 0);
+
+            canvasName = 'rangeCompression';
+        }
+
+        function countPiksel(arr) {
+            const count = {};
+
+            arr.forEach(element => {
+                count[element] = (count[element] || 0) + 1;
+            });
+
+            return count;
+        }
+
+        function histogramEqualization(jenisGambar) {
+            if (cekJenisGambar(jenisGambar) != 0) {
+                cekJenisGambar(jenisGambar);
+            }
+
+            let count = {}, ng = {};
+            let px = [];
+            let cg = 0, pxTotal = 0;
+
+            pxTotal = imgData.data.length;
+
+            for (i = 0; i < imgData.data.length; i += 1) { 
+                px.push(imgData.data[i]);
+            }
+
+            count = countPiksel(px);
+            ng = countPiksel(px);
+
+            const keyPx = Object.keys(count);
+
+            keyPx.forEach((key, index) => {
+                cg = cg + count[key];
+                ng[key] = Math.round(bit * (cg / pxTotal));
+            });
+
+            const keyNg = Object.keys(ng);
+
+            for (i = 0; i < imgData.data.length; i += 4) {
+                keyNg.forEach((key, index) => {
+                    if(imgData.data[i] == key) {
+                        imgData.data[i] = ng[key];
+                    }
+
+                    if(imgData.data[i + 1] == key) {
+                        imgData.data[i + 1] = ng[key];
+                    }
+
+                    if(imgData.data[i + 2] == key) {
+                        imgData.data[i + 2] = ng[key];
+                    }
+                });
+
+                imgData.data[i + 3] = 255;
+                
+                h1.push(imgData.data[i]);
+                h2.push(imgData.data[i+1]);
+                h3.push(imgData.data[i+2]);
+
+                hb.push(imgData.data[i]);
+                hb.push(imgData.data[i+1]);
+                hb.push(imgData.data[i+2]);
+            }
+
+            plotHistogram(h1, h2, h3, "Hasil");
+
+            if (jenisGambar == 'piihGmbOriginal') {
+                plotHistogramBanding(ob, hb, "aktif");
+            } else if (jenisGambar == 'piihGmbGrayscale') {
+                plotHistogramBanding(gb, hb, "aktif");
+            }
+
+            canvasCtxHasil.putImageData(imgData, 0, 0);
+
+            canvasName = 'histogramEqualization';
+        }
+
+        function openNav() {
+            document.getElementById("mySidebar").style.width = "250px";
+            document.getElementById("main").style.marginLeft = "250px";
+        }
+
+        function closeNav() {
+            document.getElementById("mySidebar").style.width = "0";
+            document.getElementById("main").style.marginLeft= "0";
+        }
+    </script>
+</body>
+</html>
